@@ -69,3 +69,12 @@ class Smiley(object):
         """
         self._btn.image = self._images.smiley_won
         self._btn.configure(image=self._btn.image)
+
+    def set_start(self):
+        """
+        sets smiley to start face
+        :return: None
+        :rtype: None
+        """
+        self._btn.image = self._images.smiley_start
+        self._btn.configure(image=self._btn.image)

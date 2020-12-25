@@ -75,6 +75,7 @@ class Field(object):
 
         self._lbl = tk.Label(self._frame, text=str(self.pos))
         self._lbl.image = None
+
         self.has_bomb = False
         self.bombs_near = None
         self.panel = None
@@ -87,15 +88,23 @@ class Field(object):
         """
         self._lbl.place(x=LINE_BETWEEN_FIELDS + self.pos.x * (FIELD_WIDTH + LINE_BETWEEN_FIELDS), y=LINE_BETWEEN_FIELDS + self.pos.y * (FIELD_HEIGHT + LINE_BETWEEN_FIELDS), width=FIELD_WIDTH, height=FIELD_HEIGHT)
 
-    def add_panel(self, images):
+    def add_panel(self, images, cb_flag_up, cb_flag_down, cb_start_timer, cb_stop_timer):
         """
         Add overlying panel to the field
         :param images:
         :type images: panel.PanelImages
+        :param cb_flag_down: callback to count counter for flag counter up
+        :type cb_flag_down:
+        :param cb_flag_up: callback to count counter for flag counter down
+        :type cb_flag_up:
+        :param cb_stop_timer: callback for starting game time counter
+        :type cb_stop_timer:
+        :param cb_start_timer: callback for stopping game time counter
+        :type cb_start_timer:
         :return: None
         :rtype: None
         """
-        self.panel = panel.Panel(self._frame, self.pos, images)
+        self.panel = panel.Panel(self._frame, self.pos, images, cb_flag_up, cb_flag_down, cb_start_timer, cb_stop_timer)
 
     def update_img(self):
         """
@@ -127,7 +136,7 @@ class Field(object):
         :return: None
         :rtype: None
         """
-        self._set_img(self._images.Bomb)
+        self._set_img(self._images.BombExploded)
 
     def reset(self):
         """
@@ -138,4 +147,17 @@ class Field(object):
         self.has_bomb = False
         self.bombs_near = None
         self.panel.reveal = False
+        self.panel._cb_explode_bomb = None
+        self.panel._cb_game_lost = None
 
+    def set_bomb(self, cb_end_game):
+        """
+        sets bomb to field and panel and gives callback to panel to end game
+        :param cb_end_game:
+        :type cb_end_game: callback for end game if bomb field revealed
+        :return: None
+        :rtype: None
+        """
+        self.has_bomb = True
+        self.panel._cb_game_lost = cb_end_game
+        self.panel._cb_explode_bomb = self.explode_bomb

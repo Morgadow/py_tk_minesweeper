@@ -105,7 +105,7 @@ class CounterBaseClass(object):
             self.count += 1
             self.update_img()
 
-    def reduce_one(self):
+    def count_down(self):
         """
         reduces count by one and updates picture
         :return: None
@@ -194,7 +194,7 @@ class TimeCounter(CounterBaseClass):
         :rtype: None
         """
         self._is_counting = False
-        self._thread.join()
+        # self._thread.join()  # todo this seems to hold the main thread
 
     def _count(self):
         """

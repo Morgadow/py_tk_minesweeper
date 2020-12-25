@@ -36,23 +36,24 @@ class MinesweeperGUI(object):
     def __init__(self):
 
         self._root = None
+        self.logger = utils.get_logger(self.__class__.__name__)
 
         self._full_field = None
         self._upper_frame = None
         self._field_frame = None
 
-        self._smiley = None
-        self._flag_counter = None
-        self._timer_counter = None
+        self._smiley: smiley.Smiley = None
+        self._flag_counter: counter.FlagCounter = None
+        self._timer_counter: counter.TimeCounter = None
         self._fields = []
 
-        self.setting = None
-        self._size = None
+        self.setting: GameSetting = None
+        self._size: Size = None
 
-        self._counter_images = None
-        self._smiley_images = None
-        self._field_images = None
-        self._panel_images = None
+        self._counter_images: counter.CounterImages = None
+        self._smiley_images: smiley.SmileyImages = None
+        self._field_images: field.FieldImages = None
+        self._panel_images: panel.PanelImages = None
 
     def build_gui(self, game_setting: GameSetting = mw.AVAILABLE_MODES['Intermediate']):
         """
@@ -163,8 +164,7 @@ class MinesweeperGUI(object):
 
         # create fields and panels and prepare everything
         self.create_fields()
-        self._give_out_bombs()
-        self._update_all_fields()
+        self.new_game()
 
         self._root.mainloop()
 
@@ -180,8 +180,8 @@ class MinesweeperGUI(object):
             for row in range(self.setting.num_rows):
                 elem = field.Field(self._field_frame, Position(col, row), self._field_images)
                 elem.place()
-                elem.add_panel(self._panel_images)
-                elem.panel._place()
+                elem.add_panel(self._panel_images, self._flag_counter.count_up, self._flag_counter.count_down, self._timer_counter.start_timer, self._timer_counter.stop_timer)
+                elem.panel.place()
                 col_fields.append(elem)
             self._fields.append(col_fields)
 
@@ -192,16 +192,15 @@ class MinesweeperGUI(object):
 
     def new_game(self):
         """
-        start new game
+        start new game, resets field, sets new bombs and calculates all field numbers
         :return:
         :rtype:
         """
-
-        # self._timer_counter.start_timer()   # todo
-
         self._reset_all_fields()
+        self._smiley.set_start()
         self._give_out_bombs()
         self._update_all_fields(recalc=True)
+        self._timer_counter.reset()
 
     def _give_out_bombs(self):
         """
@@ -216,7 +215,7 @@ class MinesweeperGUI(object):
 
         bombs = random.sample(av_pos, self.setting.bombs)
         for pos in bombs:
-            self._fields[pos.x][pos.y].has_bomb = True
+            self._fields[pos.x][pos.y].set_bomb(self.explode_bomb)
 
     def _update_all_fields(self, recalc=False):
         """
@@ -228,7 +227,6 @@ class MinesweeperGUI(object):
         if recalc:
             for x in range(self.setting.num_cols):
                 for y in range(self.setting.num_rows):
-                    import utils
 
                     sub_field = []
                     if x > 0:
@@ -239,7 +237,7 @@ class MinesweeperGUI(object):
 
                     self._fields[x][y].bombs_near = [elem.has_bomb for elem in sub_field].count(True)
                     self._fields[x][y].update_img()
-            utils.LOG.debug("This took {}s".format(time.time() - t))
+            utils.LOG.debug("calculating numbers took {}s".format(time.time() - t))
 
         else:  # no recalc
             for row in self._fields:
@@ -255,3 +253,26 @@ class MinesweeperGUI(object):
         for row in self._fields:
             for elem in row:
                 elem.reset()
+
+    def explode_bomb(self):
+        """
+        end game
+        :return:
+        :rtype:
+        """
+        self.logger.info("Pressed on a bomb, game lost!")
+        self._smiley.set_lost()
+        self._timer_counter.stop_timer()
+        self.reveal_field()  # todo
+        # todo mark all flagged bombs as crossed out bombs
+
+    def reveal_field(self):
+        """
+        unplaces all panels
+        :return: None
+        :rtype: None
+        """
+        for x in range(self.setting.num_cols):
+            for y in range(self.setting.num_rows):
+                if self._fields[x][y].has_bomb and not self._fields[x][y].panel.has_flag:
+                    self._fields[x][y].panel.un_place()
