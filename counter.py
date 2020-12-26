@@ -5,7 +5,7 @@ import tkinter as tk
 import threading
 
 from constants import *
-from classes import Size
+from classes import Size, Game
 import utils
 
 
@@ -45,7 +45,7 @@ class CounterBaseClass(object):
 
     size = Size(height=COUNTER_HEIGHT, width=COUNTER_WIDTH * 3)
 
-    def __init__(self, frame, start, images):
+    def __init__(self, frame, start, images, game_status):
         """
         constructor for counter base class
         :param frame: gui frame to place counter images inside
@@ -54,10 +54,13 @@ class CounterBaseClass(object):
         :type start: int
         :param images: all possible images
         :type images: CounterImages
+        :param game_status: game status with global flags
+        :type game_status: Game
         """
 
         self.count = start
         self._start = start
+        self.game_status = game_status
 
         self._logger = utils.get_logger(self.__class__.__name__)
         self._frame = frame
@@ -79,6 +82,7 @@ class CounterBaseClass(object):
 
         self._is_counting = False  # flag for counting flag
         self._thread = None
+        self._lck = threading.Lock()
 
     def init(self):
         """
@@ -92,7 +96,7 @@ class CounterBaseClass(object):
             self._labels[i].cnt = 0
             self._labels[i].image = None
 
-        self.update_img()
+        self._update_img()
         self._logger.debug("Created counter elements")
 
     def count_up(self):
@@ -101,9 +105,10 @@ class CounterBaseClass(object):
         :return: None
         :rtype: None
         """
-        if self.count < 999:
-            self.count += 1
-            self.update_img()
+        if self.game_status.running and self.count < 999:
+            with self._lck:
+                self.count += 1
+            self._update_img()
 
     def count_down(self):
         """
@@ -111,46 +116,10 @@ class CounterBaseClass(object):
         :return: None
         :rtype: None
         """
-        self.count -= 1
-        self.update_img()
-
-    def update_img(self):
-        """
-        set image based on self.count
-        :return: None
-        :rtype: None
-        """
-        if self.count >= 0:
-            new_rep = '0' * (3 - len(str(self.count)))
-            new_rep += str(self.count)[-max(len(str(self.count)), 3):]
-        else:
-            new_rep = '-' + '0' * (2 - len(str(self.count)))
-            new_rep += str(self.count)[-max(len(str(self.count)), 2):]
-
-        for index, elem in enumerate(new_rep):
-            if elem != self._labels[index].cnt:
-                self._labels[index].cnt = elem
-                self._labels[index].image = self._str_to_image[elem]
-                self._labels[index].configure(image=self._labels[index].image)
-
-        self._logger.debug("Set number '{}' to counter".format(new_rep))
-
-    def reset(self, start=None):
-        """
-        resets game counter to start value
-        :param start:
-        :type start: int or None
-        :return: None
-        :rtype: None
-        """
-        self.count = (self._start if start is None else start)
-        self.update_img()
-
-
-class TimeCounter(CounterBaseClass):
-    """
-    counter class for game time
-    """
+        if self.game_status.running:
+            with self._lck:
+                self.count -= 1
+            self._update_img()
 
     @property
     def is_counting(self):
@@ -172,7 +141,7 @@ class TimeCounter(CounterBaseClass):
         """
         if not status and self._is_counting:
             self.stop_timer()
-        if status and self._is_counting:
+        if self.game_status.running and status and not self._is_counting:
             self.start_timer()
 
     def start_timer(self):
@@ -185,7 +154,7 @@ class TimeCounter(CounterBaseClass):
             self._is_counting = True
             self._thread = threading.Thread(name='GameTimeCounter', target=self._count, daemon=True)
             self._thread.start()
-            self._logger.debug("Started counting game counter")
+            self._logger.info("Started counting on counter: {}".format(self.__class__.__name__))
 
     def stop_timer(self):
         """
@@ -194,7 +163,6 @@ class TimeCounter(CounterBaseClass):
         :rtype: None
         """
         self._is_counting = False
-        # self._thread.join()  # todo this seems to hold the main thread
 
     def _count(self):
         """
@@ -203,23 +171,53 @@ class TimeCounter(CounterBaseClass):
         :rtype:
         """
         while self._is_counting:
-            time.sleep(1)
             self.count_up()
-        self._logger.debug("Stopped counting game counter")
+            time.sleep(1)
+        self._logger.info("Stopped counting on counter: {}".format(self.__class__.__name__))
+
+    def _update_img(self):
+        """
+        set image based on self.count
+        :return: None
+        :rtype: None
+        """
+        if self.count >= 0:
+            new_rep = '0' * (3 - len(str(self.count)))
+            new_rep += str(self.count)[-max(len(str(self.count)), 3):]
+        else:
+            new_rep = '-' + '0' * (2 - len(str(self.count)))
+            new_rep += str(self.count)[-max(len(str(self.count)), 2):]
+
+        for index, elem in enumerate(new_rep):
+            if elem != self._labels[index].cnt:
+                self._labels[index].cnt = elem
+                self._labels[index].image = self._str_to_image[elem]
+                self._labels[index].configure(image=self._labels[index].image)
 
     def reset(self, start=None):
         """
-        resets game counter to start value
-        :param start:
+        resets counter to start value
+        :param start: start number of counter
         :type start: int or None
         :return: None
         :rtype: None
         """
         self.stop_timer()
         self.count = (self._start if start is None else start)
-        self.update_img()
+        self._update_img()
 
 
 class FlagCounter(CounterBaseClass):
+    """
+    Counter for counting amount of flags set and bombs remaining
+    Note: This class exists to give logger class a class name as logger name!
+    """
+    pass
 
+
+class TimeCounter(CounterBaseClass):
+    """
+    Counter for continuously counting game time once started
+    Note: This class exists to give logger class a class name as logger name!
+    """
     pass

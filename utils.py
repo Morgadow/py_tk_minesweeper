@@ -10,9 +10,10 @@ LOG_LEVEL = logging.DEBUG
 
 LOG = logging.getLogger()
 LOG.setLevel(LOG_LEVEL)
-# formatter = logging.Formatter()  # todo
+formatter = logging.Formatter('%(levelname)s - %(asctime)s - %(name)s - %(message)s')
 sh = logging.StreamHandler()
 sh.setLevel(LOG_LEVEL)
+sh.setFormatter(formatter)
 LOG.addHandler(sh)
 
 
