@@ -175,6 +175,7 @@ class MinesweeperGUI(object):
         :return:
         :rtype:
         """
+        t = time.time()
         # create fields
         for col in range(self.game.settings.num_cols):
             col_fields = []
@@ -189,6 +190,7 @@ class MinesweeperGUI(object):
                 col_fields.append(elem)
             self._fields.append(col_fields)
 
+        utils.LOG.debug("Creating all fields took: {}s".format(time.time() - t))
         # todo play with idletasks as one way to improve compute time and generating gamefield to begin with
         # tk.update_idletasks()
         # tk.update()
@@ -286,7 +288,12 @@ class MinesweeperGUI(object):
         self.game.running = False
         self._smiley.set_won()
         self._timer_counter.stop_timer()
-        self.reveal_bombs()
+
+        for x in range(self.game.settings.num_cols):  # every unflagged bomb gets a flag
+            for y in range(self.game.settings.num_rows):
+                if self._fields[x][y].back.has_bomb and not self._fields[x][y].front.has_flag:
+                    self._fields[x][y].front.set_flag()
+
         # todo handle highscore
 
     def reveal_bombs(self):

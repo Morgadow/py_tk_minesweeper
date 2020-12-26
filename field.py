@@ -431,9 +431,13 @@ class Field(object):
         """
         if state and not self.front.is_revealed:
             self.front.un_place()
-            self.game_status.fields_left -= 1
-            if self.game_status.fields_left == 0:
-                self._cb_game_won()
+
+            # handle counter towards game won
+            if not self.back.has_bomb:
+                self.game_status.fields_left -= 1
+                if self.game_status.fields_left == 0:
+                    self._cb_game_won()
+
         elif not state and self.front.is_revealed:
             self.front.place()
 

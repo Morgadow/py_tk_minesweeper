@@ -116,7 +116,7 @@ class CounterBaseClass(object):
         :return: None
         :rtype: None
         """
-        if self.game_status.running:
+        if self.game_status.running and self.count > -99:
             with self._lck:
                 self.count -= 1
             self._update_img()
@@ -185,8 +185,8 @@ class CounterBaseClass(object):
             new_rep = '0' * (3 - len(str(self.count)))
             new_rep += str(self.count)[-max(len(str(self.count)), 3):]
         else:
-            new_rep = '-' + '0' * (2 - len(str(self.count)))
-            new_rep += str(self.count)[-max(len(str(self.count)), 2):]
+            new_rep = '-' + '0' * (2 - len(str(abs(self.count))))
+            new_rep += str(abs(self.count))[-max(len(str(abs(self.count))), 2):]
 
         for index, elem in enumerate(new_rep):
             if elem != self._labels[index].cnt:
