@@ -78,6 +78,13 @@ class MinesweeperGUI(object):
         self._root.wm_iconbitmap(bitmap=utils.resource_path("ui\\icon.ico"))
         self._root._size = self._size
 
+        # # menu bar
+        # menu=tk.Menu(self._root)
+        # self._root.config(menu=menu)
+        # # self.config(menu=menu)
+        # subMenu=tk.Menu(menu)
+        # menu.add_cascade(label="File",menu=subMenu)
+
         # images
         self._counter_images = counter.CounterImages()
         self._smiley_images = smiley.SmileyImages()

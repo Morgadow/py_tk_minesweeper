@@ -1,7 +1,7 @@
 
 
 import gui
-import classes
+from classes import GameSetting, Game
 
 
 DEBUG = False  # todo implement debug mode in sys args
@@ -12,12 +12,21 @@ DEBUG = False  # todo implement debug mode in sys args
 # todo bug fixen mit eins breiter als gedacht
 # todo rand field frame schöner machen, gleicht nicht genau dem original
 
+AVAILABLE_MODES = {  # todo different game settings: Beginner, Intermediate, ...
+    'Beginner': GameSetting(rows=9, cols=9, bombs=10),
+    'Intermediate': GameSetting(rows=16, cols=16, bombs=40),
+    'Expert': GameSetting(rows=16, cols=30, bombs=99),
+    'Custom': GameSetting(rows=None, cols=None, bombs=None)  # todo
+}
+
 
 if __name__ == '__main__':
 
     print("Starting game: ")
 
-    game = classes.Game()
+    game = Game(settings=AVAILABLE_MODES['Beginner'])
+    # game = Game(settings=AVAILABLE_MODES['Expert'])
+    # game = Game()
     mw = gui.MinesweeperGUI(game)
     mw.build_gui()
 

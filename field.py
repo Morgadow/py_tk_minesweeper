@@ -22,29 +22,31 @@ class BackPanelImages(object):
 
     def __init__(self):
 
-        self.Empty = utils.get_img("ui\\fields\\empty.png")
-        self.Bomb = utils.get_img("ui\\fields\\bomb.png")
-        self.BombCleared = utils.get_img("ui\\fields\\bomb_cleared.png")
-        self.BombExploded = utils.get_img("ui\\fields\\bomb_exploded.png")
-        self.Cnt_1 = utils.get_img("ui\\fields\\1.png")
-        self.Cnt_2 = utils.get_img("ui\\fields\\2.png")
-        self.Cnt_3 = utils.get_img("ui\\fields\\3.png")
-        self.Cnt_4 = utils.get_img("ui\\fields\\4.png")
-        self.Cnt_5 = utils.get_img("ui\\fields\\5.png")
-        self.Cnt_6 = utils.get_img("ui\\fields\\6.png")
-        self.Cnt_7 = utils.get_img("ui\\fields\\7.png")
-        self.Cnt_8 = utils.get_img("ui\\fields\\8.png")
+        self.Empty = utils.get_img("ui\\fields\\back\\empty.png")
+        self.Bomb = utils.get_img("ui\\fields\\back\\bomb.png")
+        self.BombCleared = utils.get_img("ui\\fields\\back\\bomb_cleared.png")
+        self.BombExploded = utils.get_img("ui\\fields\\back\\bomb_exploded.png")
+        self.Cnt_1 = utils.get_img("ui\\fields\\back\\1.png")
+        self.Cnt_2 = utils.get_img("ui\\fields\\back\\2.png")
+        self.Cnt_3 = utils.get_img("ui\\fields\\back\\3.png")
+        self.Cnt_4 = utils.get_img("ui\\fields\\back\\4.png")
+        self.Cnt_5 = utils.get_img("ui\\fields\\back\\5.png")
+        self.Cnt_6 = utils.get_img("ui\\fields\\back\\6.png")
+        self.Cnt_7 = utils.get_img("ui\\fields\\back\\7.png")
+        self.Cnt_8 = utils.get_img("ui\\fields\\back\\8.png")
 
 
 class FrontPanelImages(object):
 
     Panel_img = None
     Flag_img = None
+    NotSure_img = None
 
     def __init__(self):
 
-        self.Panel_img = utils.get_img("ui\\fields\\panel.png")
-        self.Flag_img = utils.get_img("ui\\fields\\flag.png")
+        self.Panel_img = utils.get_img("ui\\fields\\front\\panel.png")
+        self.Flag_img = utils.get_img("ui\\fields\\front\\flag.png")
+        self.NotSure_img = utils.get_img("ui\\fields\\front\\not_sure.png")
 
 
 class PanelBC:
@@ -127,6 +129,7 @@ class Front(PanelBC):
         super(Front, self).__init__(frame, size, pos, images)
 
         self.has_flag = False
+        self.has_not_sure = False
         self.is_revealed = False
 
         # bound commands
@@ -162,29 +165,6 @@ class Front(PanelBC):
         self.is_revealed = True
         self._lbl.place_forget()
 
-    # @property
-    # def revealed(self):
-    #     """
-    #     property getter of _revealed, returns revealed state
-    #     :return: is revealed or not
-    #     :rtype: bool
-    #     """
-    #     return self._is_revealed
-    #
-    # @revealed.setter
-    # def revealed(self, state):
-    #     """
-    #     property setter for _revealed
-    #     :param state: panel is revealed or not
-    #     :type state: bool
-    #     :return: None
-    #     :rtype: None
-    #     """
-    #     if state and not self._is_revealed:
-    #         self.un_place()
-    #     elif not state and self._is_revealed:
-    #         self.place()
-
     def set_flag(self):
         """
         sets flag to panel
@@ -192,15 +172,27 @@ class Front(PanelBC):
         :rtype: None
         """
         self.has_flag = True
+        self.has_not_sure = False
         self._set_img(self._images.Flag_img)
 
-    def del_flag(self):
+    def set_notsure(self):
         """
-        deletes flag from panel
+        sets flag to panel
         :return: None
         :rtype: None
         """
         self.has_flag = False
+        self.has_not_sure = True
+        self._set_img(self._images.NotSure_img)
+
+    def set_panel(self):
+        """
+        sets flag to panel
+        :return: None
+        :rtype: None
+        """
+        self.has_flag = False
+        self.has_not_sure = False
         self._set_img(self._images.Panel_img)
 
     def reset(self):
@@ -209,7 +201,7 @@ class Front(PanelBC):
         :return: None
         :rtype: None
         """
-        self.del_flag()
+        self.set_panel()
         self.place()
 
 
@@ -385,8 +377,10 @@ class Field(object):
         """
         if self.game_status.running:
             if self.front.has_flag:
-                self.front.del_flag()
+                self.front.set_notsure()
                 self._cb_flag_cnt_up()
+            elif self.front.has_not_sure:
+                self.front.set_panel()
             else:
                 self.front.set_flag()
                 self._cb_flag_cnt_down()

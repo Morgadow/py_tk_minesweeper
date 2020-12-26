@@ -1,7 +1,6 @@
 import utils
 
 
-
 class Size(object):
 
     def __init__(self, height, width):
@@ -23,24 +22,6 @@ class GameSetting(object):
         self.num_rows = rows
         self.num_cols = cols
         self.bombs = bombs  # amount of bombs
-        # self.sound = False
-
-    # todo
-    # def activate_sound(self):
-    #     """
-    #     activate game sound
-    #     :return: None
-    #     :rtype: None
-    #     """
-    #     self.sound = True
-    #
-    # def deactivate_sound(self):
-    #     """
-    #     deactivate game sound
-    #     :return: None
-    #     :rtype: None
-    #     """
-    #     self.sound = False
 
 
 AVAILABLE_MODES = {  # todo different game settings: Beginner, Intermediate, ...
