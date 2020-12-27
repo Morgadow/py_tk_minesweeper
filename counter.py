@@ -106,8 +106,8 @@ class CounterBaseClass(object):
         :rtype: None
         """
         if self.game_status.running and self.count < 999:
-            with self._lck:
-                self.count += 1
+            # with self._lck:
+            self.count += 1
             self._update_img()
 
     def count_down(self):
@@ -117,8 +117,8 @@ class CounterBaseClass(object):
         :rtype: None
         """
         if self.game_status.running and self.count > -99:
-            with self._lck:
-                self.count -= 1
+            # with self._lck:
+            self.count -= 1
             self._update_img()
 
     @property

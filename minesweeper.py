@@ -4,13 +4,13 @@ import gui
 from classes import GameSetting, Game
 
 
-DEBUG = False  # todo implement debug mode in sys args
+DEBUG = False  # todo implement debug mode in sys args -> bind sys
 
 
 # todo am ende aufräumen und unbenutzte variablen aufräumen/löschen
 # todo alles was nicht notwendig ist nicht als klassenvariabe machen
-# todo bug fixen mit eins breiter als gedacht
-# todo rand field frame schöner machen, gleicht nicht genau dem original
+# todo constants auflösen und überall unterbringen
+
 
 AVAILABLE_MODES = {  # todo different game settings: Beginner, Intermediate, ...
     'Beginner': GameSetting(rows=9, cols=9, bombs=10),
@@ -24,9 +24,9 @@ if __name__ == '__main__':
 
     print("Starting game: ")
 
-    game = Game(settings=AVAILABLE_MODES['Beginner'])
+    # game = Game(settings=AVAILABLE_MODES['Beginner'])
     # game = Game(settings=AVAILABLE_MODES['Expert'])
-    # game = Game()
+    game = Game()
     mw = gui.MinesweeperGUI(game)
     mw.build_gui()
 
