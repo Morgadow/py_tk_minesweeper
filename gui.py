@@ -1,5 +1,8 @@
+#!/usr/bin/python3.7
+# -*- coding: utf-8 -*-
 
 
+import sys
 import random
 import tkinter as tk
 import time
@@ -10,7 +13,57 @@ import smiley
 import counter
 from classes import Size, Position, Game
 
-from constants import *
+
+"""
+Main GUI for Minesweeper game
+Game mechanics are implemented here and given to other objects as callbacks
+
+DEBUG Mode possible for developing, called by keyword [--debug] as sys argument
+"""
+
+
+# debug mode evaluation, enabling some more printouts, enabling console
+DEBUG = (True if '--debug' in sys.argv else False)
+
+
+# constants of gui sizes
+HEIGHT_MENU_BAR = 20
+
+# outer borders of complete field
+TOP_WHITE_BORDER = 3  # color: #ffffff
+TOP_GRAY_BORDER = 6  # color: #c0c0c0
+LEFT_WHITE_BORDER = 3  # color: #c0c0c0
+LEFT_GRAY_BORDER = 6  # color: #c0c0c0
+RIGHT_GRAY_BORDER = 5  # color: #c0c0c0
+BOTTOM_GRAY_BORDER = 5  # color: #c0c0c0
+BORDER_TOP_FIELD_BORDER = 6  # color: #c0c0c0
+
+# top frame
+OUTER_BORDER_TOP_FRAME = 1
+INNER_BORDER_TOP_FRAME = 1
+SPACER_ABOVE_COUNTER = 4
+SPACER_LEFT_COUNTER = 5
+SPACER_RIGHT_COUNTER = 7
+SPACER_BELOW_COUNTER = 4
+BORDER_AROUND_COUNTER = 1
+FULL_HEIGHT_TOP_FRAME = OUTER_BORDER_TOP_FRAME*2 + INNER_BORDER_TOP_FRAME*2 + SPACER_ABOVE_COUNTER + SPACER_BELOW_COUNTER + counter.COUNTER_HEIGHT + BORDER_AROUND_COUNTER*2
+
+# borders around game field
+TOP_FIELD_BORDER_1, TOP_FIELD_BORDER_2, TOP_FIELD_BORDER_3 = 1, 1, 1
+TOP_FIELD_BORDER = TOP_FIELD_BORDER_1 + TOP_FIELD_BORDER_2 + TOP_FIELD_BORDER_3
+LEFT_FIELD_BORDER_1, LEFT_FIELD_BORDER_2, LEFT_FIELD_BORDER_3 = 1, 1, 1
+LEFT_FIELD_BORDER = LEFT_FIELD_BORDER_1 + LEFT_FIELD_BORDER_2 + LEFT_FIELD_BORDER_3
+RIGHT_FIELD_BORDER_1, RIGHT_FIELD_BORDER_2, RIGHT_FIELD_BORDER_3 = 1, 1, 1
+RIGHT_FIELD_BORDER = RIGHT_FIELD_BORDER_1 + RIGHT_FIELD_BORDER_2 + RIGHT_FIELD_BORDER_3
+BOT_FIELD_BORDER_1, BOT_FIELD_BORDER_2, BOT_FIELD_BORDER_3 = 1, 1, 1
+BOT_FIELD_BORDER = BOT_FIELD_BORDER_1 + BOT_FIELD_BORDER_2 + BOT_FIELD_BORDER_3
+
+
+# colors (retrieved by screenshotting and color matching done in MSPaint)
+COLOR_WHITE = '#FFFFFF'
+COLOR_LIGHT_GRAY = '#c0c0c0'
+COLOR_DARK_GRAY = '#808080'
+
 
 """
 Timing Tests building game field (Tested with Intermediate Setting)
@@ -21,9 +74,7 @@ Timing Tests building game field (Tested with Intermediate Setting)
 - Building the 15x15 Buttons or Labels and placing : ~0.036s
 
 Different building game field options:
-
 1) Building fields and placing and building panels and placing them instantly in this order: t.time: 0.06 s (Looks a lot longer!)
-
 2) Building fields without labels and building panels and placing panels instantly in this order: ~0.055 s  
 """
 
@@ -31,7 +82,7 @@ Different building game field options:
 class MinesweeperGUI(object):
 
     # noinspection PyTypeChecker
-    def __init__(self, game):
+    def __init__(self, game, cb_change_field):
 
         self._root = None
         self.logger = utils.get_logger(self.__class__.__name__)
@@ -50,12 +101,18 @@ class MinesweeperGUI(object):
         # basic game
         self._size: Size = None
         self.game: Game = game
+        self._cb_change_field = cb_change_field
 
         # images for game elements
         self._counter_images: counter.CounterImages = None
         self._smiley_images: smiley.SmileyImages = None
         self._field_front_images: field.FrontPanelImages = None
         self._field_back_images: field.BackPanelImages = None
+
+        # debug handling
+        if DEBUG:
+            self._debug_reveal = False
+            self._debug_revealed_fields = []
 
     def build_gui(self):
         """
@@ -65,8 +122,8 @@ class MinesweeperGUI(object):
         """
         # basic settings
         self._size = Size(
-            width=self.game.settings.num_cols * (BACK_PANEL_WIDTH + LINE_BETWEEN_FIELDS) + RIGHT_FIELD_BORDER + LEFT_FIELD_BORDER + LEFT_WHITE_BORDER + LEFT_GRAY_BORDER + RIGHT_GRAY_BORDER,
-            height=self.game.settings.num_rows * (BACK_PANEL_WIDTH + LINE_BETWEEN_FIELDS) + TOP_WHITE_BORDER + TOP_GRAY_BORDER + FULL_HEIGHT_TOP_FRAME + BORDER_TOP_FIELD_BORDER + BOTTOM_GRAY_BORDER + TOP_FIELD_BORDER + BOT_FIELD_BORDER
+            width=self.game.settings.num_cols * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS) + RIGHT_FIELD_BORDER + LEFT_FIELD_BORDER + LEFT_WHITE_BORDER + LEFT_GRAY_BORDER + RIGHT_GRAY_BORDER,
+            height=self.game.settings.num_rows * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS) + TOP_WHITE_BORDER + TOP_GRAY_BORDER + FULL_HEIGHT_TOP_FRAME + BORDER_TOP_FIELD_BORDER + BOTTOM_GRAY_BORDER + TOP_FIELD_BORDER + BOT_FIELD_BORDER
         )
 
         # icon and main field
@@ -79,9 +136,10 @@ class MinesweeperGUI(object):
         self._root._size = self._size
         self._root.bind("<F2>", lambda event: self.new_game())
 
-        # debug binds  # todo debug option
-        self._root.bind("<F3>", lambda event: self._debug_print_sizes())
-        # self._root.bind("<F3>", lambda event: self._debug_print_sizes())  # todo debug reveal field
+        # debug binds
+        if DEBUG:
+            self._root.bind("<F3>", lambda event: self._debug_print_sizes())
+            self._root.bind("<F4>", lambda event: self._debug_reveal_field())
 
         # menu bar
         menu = tk.Menu(self._root, tearoff=0)
@@ -91,10 +149,10 @@ class MinesweeperGUI(object):
         menu.add_cascade(label='Game', menu=game_menu)
         game_menu.add_command(label='New                        F2', command=self.new_game)
         game_menu.add_separator()
-        game_menu.add_command(label='Beginner')
-        game_menu.add_command(label='Intermediate')
-        game_menu.add_command(label='Expert')
-        game_menu.add_command(label='Custom')
+        game_menu.add_command(label='Beginner', command=lambda: self._cb_change_field(self.game.possible_settings['Beginner']))
+        game_menu.add_command(label='Intermediate', command=lambda: self._cb_change_field(self.game.possible_settings['Intermediate']))
+        game_menu.add_command(label='Expert', command=lambda: self._cb_change_field(self.game.possible_settings['Expert']))
+        game_menu.add_command(label='Custom')  # todo
         game_menu.add_separator()
         game_menu.add_command(label='Marks (?)')
         game_menu.add_command(label='Colour')
@@ -130,7 +188,7 @@ class MinesweeperGUI(object):
 
         # upper area
         self._upper_frame = tk.Frame(self._root, bg=COLOR_LIGHT_GRAY)
-        self._upper_frame._width = self.game.settings.num_cols * (BACK_PANEL_WIDTH + LINE_BETWEEN_FIELDS) + LEFT_FIELD_BORDER + RIGHT_FIELD_BORDER
+        self._upper_frame._width = self.game.settings.num_cols * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS) + LEFT_FIELD_BORDER + RIGHT_FIELD_BORDER
         self._upper_frame._height = FULL_HEIGHT_TOP_FRAME
         self._upper_frame.place(x=LEFT_WHITE_BORDER + LEFT_GRAY_BORDER, y=TOP_WHITE_BORDER + TOP_GRAY_BORDER, width=self._upper_frame._width, height=self._upper_frame._height)
 
@@ -147,38 +205,38 @@ class MinesweeperGUI(object):
 
         # flag counter area
         flag_counter_frame = tk.Frame(self._upper_frame)
-        flag_counter_frame.place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER + BORDER_AROUND_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER, width=COUNTER_WIDTH * 3, height=COUNTER_HEIGHT)
-        top_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER, width=COUNTER_WIDTH*3, height=BORDER_AROUND_COUNTER)
-        left_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER, width=BORDER_AROUND_COUNTER, height=COUNTER_HEIGHT+BORDER_AROUND_COUNTER)
-        right_border = tk.Label(self._upper_frame, bg=COLOR_WHITE).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER + COUNTER_WIDTH*3, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER, width=BORDER_AROUND_COUNTER, height=COUNTER_HEIGHT + BORDER_AROUND_COUNTER)
-        bottom_border = tk.Label(self._upper_frame, bg=COLOR_WHITE).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER + BORDER_AROUND_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER + COUNTER_HEIGHT, width=COUNTER_WIDTH*3, height=BORDER_AROUND_COUNTER)
+        flag_counter_frame.place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER + BORDER_AROUND_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER, width=counter.COUNTER_WIDTH * 3, height=counter.COUNTER_HEIGHT)
+        top_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER, width=counter.COUNTER_WIDTH*3, height=BORDER_AROUND_COUNTER)
+        left_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER, width=BORDER_AROUND_COUNTER, height=counter.COUNTER_HEIGHT+BORDER_AROUND_COUNTER)
+        right_border = tk.Label(self._upper_frame, bg=COLOR_WHITE).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER + counter.COUNTER_WIDTH*3, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER, width=BORDER_AROUND_COUNTER, height=counter.COUNTER_HEIGHT + BORDER_AROUND_COUNTER)
+        bottom_border = tk.Label(self._upper_frame, bg=COLOR_WHITE).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER + BORDER_AROUND_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER + counter.COUNTER_HEIGHT, width=counter.COUNTER_WIDTH*3, height=BORDER_AROUND_COUNTER)
         self._flag_counter = counter.FlagCounter(flag_counter_frame, self.game.settings.bombs, self._counter_images, self.game)
         self._flag_counter.init()
 
         # timer counter area
         timer_counter_frame = tk.Frame(self._upper_frame)
-        timer_counter_frame.place(x=self._upper_frame._width - COUNTER_WIDTH*3 - SPACER_RIGHT_COUNTER - OUTER_BORDER_TOP_FRAME - INNER_BORDER_TOP_FRAME - BORDER_AROUND_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER, width=COUNTER_WIDTH * 3, height=COUNTER_HEIGHT)
-        top_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=self._upper_frame._width - OUTER_BORDER_TOP_FRAME - INNER_BORDER_TOP_FRAME - BORDER_AROUND_COUNTER*2 - COUNTER_WIDTH*3 - SPACER_RIGHT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER, width=COUNTER_WIDTH*3 + BORDER_AROUND_COUNTER, height=BORDER_AROUND_COUNTER)
-        left_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=self._upper_frame._width - OUTER_BORDER_TOP_FRAME - INNER_BORDER_TOP_FRAME - BORDER_AROUND_COUNTER*2 - COUNTER_WIDTH*3 - SPACER_RIGHT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER, width=BORDER_AROUND_COUNTER, height=COUNTER_HEIGHT+BORDER_AROUND_COUNTER)
-        right_border = tk.Label(self._upper_frame, bg=COLOR_WHITE).place(x=self._upper_frame._width - OUTER_BORDER_TOP_FRAME - INNER_BORDER_TOP_FRAME - BORDER_AROUND_COUNTER - SPACER_RIGHT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER, width=BORDER_AROUND_COUNTER, height=COUNTER_HEIGHT + BORDER_AROUND_COUNTER)
-        bottom_border = tk.Label(self._upper_frame, bg=COLOR_WHITE).place(x=self._upper_frame._width - OUTER_BORDER_TOP_FRAME - INNER_BORDER_TOP_FRAME - BORDER_AROUND_COUNTER - COUNTER_WIDTH*3 - SPACER_RIGHT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER + COUNTER_HEIGHT, width=COUNTER_WIDTH*3 + BORDER_AROUND_COUNTER, height=BORDER_AROUND_COUNTER)
+        timer_counter_frame.place(x=self._upper_frame._width - counter.COUNTER_WIDTH*3 - SPACER_RIGHT_COUNTER - OUTER_BORDER_TOP_FRAME - INNER_BORDER_TOP_FRAME - BORDER_AROUND_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER, width=counter.COUNTER_WIDTH * 3, height=counter.COUNTER_HEIGHT)
+        top_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=self._upper_frame._width - OUTER_BORDER_TOP_FRAME - INNER_BORDER_TOP_FRAME - BORDER_AROUND_COUNTER*2 - counter.COUNTER_WIDTH*3 - SPACER_RIGHT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER, width=counter.COUNTER_WIDTH*3 + BORDER_AROUND_COUNTER, height=BORDER_AROUND_COUNTER)
+        left_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=self._upper_frame._width - OUTER_BORDER_TOP_FRAME - INNER_BORDER_TOP_FRAME - BORDER_AROUND_COUNTER*2 - counter.COUNTER_WIDTH*3 - SPACER_RIGHT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER, width=BORDER_AROUND_COUNTER, height=counter.COUNTER_HEIGHT+BORDER_AROUND_COUNTER)
+        right_border = tk.Label(self._upper_frame, bg=COLOR_WHITE).place(x=self._upper_frame._width - OUTER_BORDER_TOP_FRAME - INNER_BORDER_TOP_FRAME - BORDER_AROUND_COUNTER - SPACER_RIGHT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER, width=BORDER_AROUND_COUNTER, height=counter.COUNTER_HEIGHT + BORDER_AROUND_COUNTER)
+        bottom_border = tk.Label(self._upper_frame, bg=COLOR_WHITE).place(x=self._upper_frame._width - OUTER_BORDER_TOP_FRAME - INNER_BORDER_TOP_FRAME - BORDER_AROUND_COUNTER - counter.COUNTER_WIDTH*3 - SPACER_RIGHT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER + counter.COUNTER_HEIGHT, width=counter.COUNTER_WIDTH*3 + BORDER_AROUND_COUNTER, height=BORDER_AROUND_COUNTER)
         self._timer_counter = counter.TimeCounter(timer_counter_frame, 0, self._counter_images, self.game)
         self._timer_counter.init()
 
         # smiley
         smiley_frame = tk.Frame(self._upper_frame)
-        smiley_frame.place(x=(self._upper_frame._width - SMILEY_WIDTH) / 2, y=(FULL_HEIGHT_TOP_FRAME - SMILEY_HEIGHT) / 2, width=SMILEY_WIDTH, height=SMILEY_HEIGHT)
-        top_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=(self._upper_frame._width - SMILEY_WIDTH) / 2 - SMILEY_BORDER, y=(FULL_HEIGHT_TOP_FRAME - SMILEY_HEIGHT) / 2 - SMILEY_BORDER, width=SMILEY_WIDTH + SMILEY_BORDER, height=SMILEY_BORDER)
-        left_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=(self._upper_frame._width - SMILEY_WIDTH) / 2 - SMILEY_BORDER, y=(FULL_HEIGHT_TOP_FRAME - SMILEY_HEIGHT) / 2, width=SMILEY_BORDER, height=SMILEY_HEIGHT)
-        right_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=(self._upper_frame._width - SMILEY_WIDTH) / 2 + SMILEY_WIDTH, y=(FULL_HEIGHT_TOP_FRAME - SMILEY_HEIGHT) / 2, width=SMILEY_BORDER, height=SMILEY_HEIGHT + SMILEY_BORDER)
-        bot_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=(self._upper_frame._width - SMILEY_WIDTH) / 2, y=(FULL_HEIGHT_TOP_FRAME - SMILEY_HEIGHT) / 2 + SMILEY_HEIGHT, width=SMILEY_WIDTH + SMILEY_BORDER, height=SMILEY_BORDER)
+        smiley_frame.place(x=(self._upper_frame._width - smiley.SMILEY_WIDTH) / 2, y=(FULL_HEIGHT_TOP_FRAME - smiley.SMILEY_HEIGHT) / 2, width=smiley.SMILEY_WIDTH, height=smiley.SMILEY_HEIGHT)
+        top_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=(self._upper_frame._width - smiley.SMILEY_WIDTH) / 2 - smiley.SMILEY_BORDER, y=(FULL_HEIGHT_TOP_FRAME - smiley.SMILEY_HEIGHT) / 2 - smiley.SMILEY_BORDER, width=smiley.SMILEY_WIDTH + smiley.SMILEY_BORDER, height=smiley.SMILEY_BORDER)
+        left_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=(self._upper_frame._width - smiley.SMILEY_WIDTH) / 2 - smiley.SMILEY_BORDER, y=(FULL_HEIGHT_TOP_FRAME - smiley.SMILEY_HEIGHT) / 2, width=smiley.SMILEY_BORDER, height=smiley.SMILEY_HEIGHT)
+        right_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=(self._upper_frame._width - smiley.SMILEY_WIDTH) / 2 + smiley.SMILEY_WIDTH, y=(FULL_HEIGHT_TOP_FRAME - smiley.SMILEY_HEIGHT) / 2, width=smiley.SMILEY_BORDER, height=smiley.SMILEY_HEIGHT + smiley.SMILEY_BORDER)
+        bot_border = tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=(self._upper_frame._width - smiley.SMILEY_WIDTH) / 2, y=(FULL_HEIGHT_TOP_FRAME - smiley.SMILEY_HEIGHT) / 2 + smiley.SMILEY_HEIGHT, width=smiley.SMILEY_WIDTH + smiley.SMILEY_BORDER, height=smiley.SMILEY_BORDER)
         self._smiley = smiley.Smiley(smiley_frame, self._smiley_images, cb_new_game=self.new_game)
         self._smiley.init()
 
         # field area
         self._field_frame = tk.Frame(self._root, bg=COLOR_DARK_GRAY)
-        self._field_frame._width = self.game.settings.num_cols * (BACK_PANEL_WIDTH + LINE_BETWEEN_FIELDS)
-        self._field_frame._height = self.game.settings.num_rows * (BACK_PANEL_WIDTH + LINE_BETWEEN_FIELDS)
+        self._field_frame._width = self.game.settings.num_cols * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS)
+        self._field_frame._height = self.game.settings.num_rows * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS)
         self._field_frame.place(x=LEFT_WHITE_BORDER + LEFT_GRAY_BORDER + LEFT_FIELD_BORDER, y=TOP_WHITE_BORDER + TOP_GRAY_BORDER + FULL_HEIGHT_TOP_FRAME + BORDER_TOP_FIELD_BORDER + TOP_FIELD_BORDER, width=self._field_frame._width, height=self._field_frame._height)
 
         top_1 = tk.Label(self._root, bg=COLOR_DARK_GRAY).place(x=LEFT_WHITE_BORDER + LEFT_GRAY_BORDER, y=TOP_WHITE_BORDER + TOP_GRAY_BORDER + FULL_HEIGHT_TOP_FRAME + BORDER_TOP_FIELD_BORDER, width=self._field_frame._width + LEFT_FIELD_BORDER + RIGHT_FIELD_BORDER_1 + RIGHT_FIELD_BORDER_2, height=TOP_FIELD_BORDER_1)
@@ -198,7 +256,7 @@ class MinesweeperGUI(object):
         bot_3 = tk.Label(self._root, bg=COLOR_WHITE).place(x=LEFT_WHITE_BORDER + LEFT_GRAY_BORDER + LEFT_FIELD_BORDER_1, y=self._root._size.height - BOTTOM_GRAY_BORDER - BOT_FIELD_BORDER_3, width=self._field_frame._width + RIGHT_FIELD_BORDER + LEFT_FIELD_BORDER_3 + LEFT_FIELD_BORDER_2, height=BOT_FIELD_BORDER_3)
 
         # create fields and panels and prepare everything
-        self.create_fields()
+        self._create_fields()
         self.new_game()
 
         self._root.mainloop()
@@ -217,7 +275,26 @@ class MinesweeperGUI(object):
         print("Calculated width: ", self._size.width)
         print("Calculated height: ", self._size.height)
 
-    def create_fields(self, ):
+    def _debug_reveal_field(self):
+        """
+        reveals all bombs until bind pressed again to unrevealed elements, does not effect game status
+        :return: None
+        :rtype: None
+        """
+        if self._debug_reveal:
+            while len(self._debug_revealed_fields):
+                elem = self._debug_revealed_fields.pop()
+                self._fields[elem.x][elem.y].front.place()
+            self._debug_reveal = False
+        else:
+            self._debug_reveal = True
+            for x in range(self.game.settings.num_cols):
+                for y in range(self.game.settings.num_rows):
+                    if not self._fields[x][y].front.is_revealed:
+                        self._fields[x][y].front.un_place()
+                        self._debug_revealed_fields.append(self._fields[x][y].pos)
+
+    def _create_fields(self, ):
         """
         initially create fields and panels and place them on the gamefield
         :return:
@@ -346,7 +423,7 @@ class MinesweeperGUI(object):
 
     def reveal_bombs(self):
         """
-        unlaces front panels and reveals bombs behind
+        removes front panels and reveals bombs behind, used at game lost showing remaining and cleared bombs
         :return: None
         :rtype: None
         """
@@ -399,3 +476,12 @@ class MinesweeperGUI(object):
             sub_field.append(self._fields[pos.x][pos.y+1])
 
         return sub_field
+
+    def destroy(self):
+        """
+        destroy complete field and all containing elements for rebuilding purposes
+        :return: None
+        :rtype: None
+        """
+        if self._root is not None:
+            self._root.destroy()

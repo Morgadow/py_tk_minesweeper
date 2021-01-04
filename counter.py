@@ -1,12 +1,18 @@
+#!/usr/bin/python3.7
+# -*- coding: utf-8 -*-
 
 
 import time
 import tkinter as tk
 import threading
 
-from constants import *
 from classes import Size, Game
 import utils
+
+
+# sizes of counter elements
+COUNTER_HEIGHT = 23
+COUNTER_WIDTH = 13
 
 
 class CounterImages(object):
@@ -41,7 +47,10 @@ class CounterImages(object):
         self.Cnt_9 = utils.get_img('ui\\counter\\9.png')
 
 
-class CounterBaseClass(object):
+class CounterBC:
+    """
+    Base class for counter objects handling basic functionality and gui representation
+    """
 
     size = Size(height=COUNTER_HEIGHT, width=COUNTER_WIDTH * 3)
 
@@ -57,12 +66,12 @@ class CounterBaseClass(object):
         :param game_status: game status with global flags
         :type game_status: Game
         """
+        self._logger = utils.get_logger(self.__class__.__name__)
 
         self.count = start
         self._start = start
         self.game_status = game_status
 
-        self._logger = utils.get_logger(self.__class__.__name__)
         self._frame = frame
         self._images = images
         self._str_to_image = {
@@ -82,13 +91,13 @@ class CounterBaseClass(object):
 
         self._is_counting = False  # flag for counting flag
         self._thread = None
-        self._lck = threading.Lock()
+        # self._lck = threading.Lock()
 
     def init(self):
         """
         initialize labels and place first images
-        :return:
-        :rtype:
+        :return: None
+        :rtype: None
         """
         for i in range(len(self._labels)):
             self._labels[i] = tk.Label(self._frame)
@@ -125,7 +134,7 @@ class CounterBaseClass(object):
     def is_counting(self):
         """
         property getter of is counting flag
-        :return:
+        :return: counting status, true if currently counting in separate thread
         :rtype: bool
         """
         return self._is_counting
@@ -134,7 +143,7 @@ class CounterBaseClass(object):
     def is_counting(self, status):
         """
         property setter of is counting flag, starts and stops counter
-        :param status:
+        :return: counting status, true if should count in separate thread, gets started if not currently running
         :type status: bool
         :return: None
         :rtype: None
@@ -207,17 +216,15 @@ class CounterBaseClass(object):
         self._update_img()
 
 
-class FlagCounter(CounterBaseClass):
+class FlagCounter(CounterBC):
     """
     Counter for counting amount of flags set and bombs remaining
     Note: This class exists to give logger class a class name as logger name!
     """
-    pass
 
 
-class TimeCounter(CounterBaseClass):
+class TimeCounter(CounterBC):
     """
     Counter for continuously counting game time once started
     Note: This class exists to give logger class a class name as logger name!
     """
-    pass

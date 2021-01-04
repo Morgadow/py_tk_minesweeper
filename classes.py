@@ -1,7 +1,19 @@
+#!/usr/bin/python3.7
+# -*- coding: utf-8 -*-
+
+
+"""
+utility classes for multipurpose usage
+"""
+
+
 import utils
 
 
-class Size(object):
+class Size:
+    """
+    class for encapsulating size information with x and y axis size
+    """
 
     def __init__(self, height, width):
 
@@ -15,7 +27,10 @@ class Size(object):
         return '\n' + self.__str__() + '\n'
 
 
-class GameSetting(object):
+class GameSetting:
+    """
+    Class for encapsulating basic game settings size of game field and number of bombs
+    """
 
     def __init__(self, rows, cols, bombs):
 
@@ -24,27 +39,23 @@ class GameSetting(object):
         self.bombs = bombs  # amount of bombs
 
 
-AVAILABLE_MODES = {  # todo different game settings: Beginner, Intermediate, ...
-    'Beginner': GameSetting(rows=9, cols=9, bombs=10),
-    'Intermediate': GameSetting(rows=16, cols=16, bombs=40),
-    'Expert': GameSetting(rows=16, cols=30, bombs=99),
-    'Custom': GameSetting(rows=None, cols=None, bombs=None)  # todo
-}
-
-
 class Game:
     """
-    Basic Game status class for 'global' flags
+    Basic Game status class for 'global' flags and game status evaluation
     """
-    def __init__(self, settings: GameSetting = AVAILABLE_MODES['Intermediate']):
-        """
 
-        :param settings:
-        :type settings: GameSetting
+    def __init__(self, possible_settings, chosen_setting):
+        """
+        constructor for setting up game settings based on game mode
+        :param possible_settings: all possible settings stored in Minesweeper to select from
+        :type possible_settings: dict
+        :param chosen_setting: currently selected game mode
+        :type chosen_setting: GameSetting
         """
         self.logger = utils.get_logger(self.__class__.__name__)
 
-        self.settings = settings
+        self.possible_settings = possible_settings
+        self.settings = chosen_setting
         self.running = False
         self.fields_left = None
 
@@ -67,6 +78,9 @@ class Game:
 
 
 class Position:
+    """
+    class for encapsulating a position with x and y axis data on game field
+    """
 
     def __init__(self, x=None, y=None):
         """
@@ -76,13 +90,16 @@ class Position:
         :param y: y-coordinate
         :type y: int
         """
+
         self.x = x
         self.y = y
 
     def __eq__(self, other):
+        """ Override of equals operator: is equal if x and y coordinates are matching """
         return self.x == other.x and self.y == other.y
 
     def __ne__(self, other):
+        """ Override of not equals operator: is not equal if x or y coordinates are not matching """
         return self.x != other.x or self.y != other.y
 
     def __str__(self):

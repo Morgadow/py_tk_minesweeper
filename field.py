@@ -1,11 +1,30 @@
+#!/usr/bin/python3.7
+# -*- coding: utf-8 -*-
+
+
 import tkinter as tk
 
 from classes import Position, Size
 import utils
-from constants import *
 
 
-class BackPanelImages(object):
+"""
+This file holds all classes used for creating gui labels for field area and implementing their functionalities
+"""
+
+
+# size of graphical representation
+BACK_PANEL_HEIGHT = 15
+BACK_PANEL_WIDTH = 15
+FRONT_PANEL_HEIGHT = 16
+FRONT_PANEL_WIDTH = 16
+LINE_BETWEEN_FIELDS = 1  # overlaps with panels  # color: #a5a5a5
+
+
+class BackPanelImages:
+    """
+    preloaded images ready for display on back panel
+    """
 
     Empty = None
     Bomb = None
@@ -36,7 +55,10 @@ class BackPanelImages(object):
         self.Cnt_8 = utils.get_img("ui\\fields\\back\\8.png")
 
 
-class FrontPanelImages(object):
+class FrontPanelImages:
+    """
+    preloaded images ready for display on front panel
+    """
 
     Panel_img = None
     Flag_img = None
@@ -50,6 +72,9 @@ class FrontPanelImages(object):
 
 
 class PanelBC:
+    """
+    base class for field front or back label element with basic abstract methods
+    """
 
     def __init__(self, frame, size, pos, images):
         """
@@ -58,9 +83,9 @@ class PanelBC:
         :type frame: tk.Frame
         :param size: Size of widget
         :type size: Size:
-        :param pos: widget position in gamefield
+        :param pos: widget position in game field
         :type pos: Position
-        :param images: all possible label images
+        :param images: all possible images for display on the panel label preloaded
         :type images: FrontPanelImages or BackPanelImages
         """
         self._frame = frame
@@ -109,7 +134,11 @@ class PanelBC:
 
 
 class Front(PanelBC):
-    
+    """
+    front field panel, hides the back displaying an emtpy panel or a flag
+    holds all callbacks for onclick on a field
+    """
+
     def __init__(self, frame, size, pos, images, cb_left_click, cb_right_click):
         """
         Back Panel with flags on it, can be revealed to show back panels
@@ -119,7 +148,7 @@ class Front(PanelBC):
         :type size: Size:
         :param pos: widget position in game field
         :type pos: Position
-        :param images: all possible label images
+        :param images: all possible images for display on the field label preloaded
         :type images: FrontPanelImages
         :param cb_left_click: callback of field class for left click on panel
         :type cb_left_click:
@@ -145,11 +174,10 @@ class Front(PanelBC):
 
     def place(self):
         """
-        initialize and place panel button
-        :return:
-        :rtype:
+        initialize and place front panel button
+        :return: None
+        :rtype: None
         """
-        # if self.is_revealed:
         self.is_revealed = False
         self._lbl.place(x=0 + self.pos.x * FRONT_PANEL_WIDTH, y=0 + self.pos.y * FRONT_PANEL_HEIGHT, width=FRONT_PANEL_WIDTH, height=FRONT_PANEL_HEIGHT)
         if self._lbl.image is None:
@@ -157,17 +185,16 @@ class Front(PanelBC):
 
     def un_place(self):
         """
-        reveal panel
+        removes front panel and reveals the back panel with numbers and bombs behind
         :return: None
         :rtype: None
         """
-        # if not self.is_revealed:
         self.is_revealed = True
         self._lbl.place_forget()
 
     def set_flag(self):
         """
-        sets flag to panel
+        sets flag to panel, disabling left click possibility
         :return: None
         :rtype: None
         """
@@ -177,7 +204,7 @@ class Front(PanelBC):
 
     def set_notsure(self):
         """
-        sets flag to panel
+        sets question mark as marking indicator to panel, does not restrict left click
         :return: None
         :rtype: None
         """
@@ -187,7 +214,7 @@ class Front(PanelBC):
 
     def set_panel(self):
         """
-        sets flag to panel
+        sets panel to empty, does not restrict left click
         :return: None
         :rtype: None
         """
@@ -197,7 +224,7 @@ class Front(PanelBC):
 
     def reset(self):
         """
-        resets back panel to original
+        resets back panel to original with empty, placed label
         :return: None
         :rtype: None
         """
@@ -206,6 +233,9 @@ class Front(PanelBC):
 
 
 class Back(PanelBC):
+    """
+    back field panel, holds information about bombs nearby or containing bomb to end game
+    """
 
     def __init__(self, frame, size, pos, images):
         """
@@ -213,8 +243,9 @@ class Back(PanelBC):
         :param frame: ui frame to place widget in
         :type frame: tk.Frame
         :param size: Size of widget
-        :type size: Size:param images:
-        :param pos: widget position in gamefield
+        :type size: Size
+        :param images: all possible images for display on the panel label preloaded
+        :param pos: widget position in game field
         :type pos: Position
         :param images: all possible label images
         :type images: BackPanelImages
@@ -231,17 +262,13 @@ class Back(PanelBC):
             6: self._images.Cnt_6,
             7: self._images.Cnt_7,
             8: self._images.Cnt_8
-            # 'Bomb': self._images.Bomb,
-            # 'Bomb_Cleared': self._images.BombCleared,
-            # 'Bomb_Exploded': self._images.BombExploded
         }
-
         self.has_bomb = False
         self.bombs_near = None
 
     def place(self):
         """
-        initialize labels and place them
+        initialize labels and place them inside frame
         :return: None
         :rtype: None
         """
@@ -293,9 +320,10 @@ class Back(PanelBC):
         self.bombs_near = None
 
 
-class Field(object):
+class Field:
     """
-    represents one field in the game field
+    represents one field in the game field, holding back and front element
+    Holds all callbacks for counter and smiley interaction and end game routine
     """
 
     def __init__(self, pos, game_status, cb_flag_up, cb_flag_down, cb_start_timer, cb_reveal_empty_fields, cb_game_won, cb_game_lost):
@@ -317,12 +345,12 @@ class Field(object):
         :param cb_game_won: callback when revealing the last numbered or empty field, game is won
         :type cb_game_won:
         """
-        self.logger = utils.get_logger(self.__class__.__name__)  # todo raus?  oder überall rein
+        self.logger = utils.get_logger(self.__class__.__name__)
 
         self.pos = pos
         self.game_status = game_status
-        self.front: Front = None
-        self.back: Back = None
+        self.front = None
+        self.back = None
 
         # callbacks from gui class
         self._cb_flag_cnt_up = cb_flag_up
@@ -362,7 +390,7 @@ class Field(object):
 
     def reset(self):
         """
-        resets field to standard values
+        resets back and front labels to standard values
         :return: None
         :rtype: None
         """
@@ -436,7 +464,9 @@ class Field(object):
             self.front.place()
 
     def __eq__(self, other):
+        """ Override of equals method: Is equal if position matches """
         return self.pos == other.pos
 
     def __ne__(self, other):
+        """ Override of not equals method: Is not equal if position are not matching """
         return self.pos != other.pos

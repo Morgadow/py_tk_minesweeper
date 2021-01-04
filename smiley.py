@@ -1,12 +1,20 @@
+#!/usr/bin/python3.7
+# -*- coding: utf-8 -*-
+
 
 import tkinter as tk
 import utils
-from constants import SMILEY_WIDTH, SMILEY_HEIGHT
 
 
-class SmileyImages(object):
+# sizes of smiley elements
+SMILEY_HEIGHT = 24
+SMILEY_WIDTH = 24
+SMILEY_BORDER = 1
+
+
+class SmileyImages:
     """
-    all possible images for counter fields for faster image setting
+    all possible images for smiley face already preloaded for faster integration
     """
     smiley_start = None
     smiley_lost = None
@@ -21,18 +29,23 @@ class SmileyImages(object):
         self.smiley_on_click = utils.get_img("ui\\smiley\\smiley_onclick.png")
 
 
-class Smiley(object):
+class Smiley:
+    """
+    Class for handling callbacks and gui representation for top smiley functionality and display
+    """
 
     def __init__(self, frame, images, cb_new_game):
         """
-
-        :param frame:
+        constructor for smiley class
+        :param frame: top frame to hold counter and smiley objects
         :type frame: tk.Frame
-        :param images:
+        :param images: all possible images for display on the smiley button preloaded
         :type images: SmileyImages
         :param cb_new_game: callback function for starting new game
         :type cb_new_game:
         """
+        self.logger = utils.get_logger(self.__class__.__name__)
+
         self._frame = frame
         self._images: SmileyImages = images
         self._btn = None

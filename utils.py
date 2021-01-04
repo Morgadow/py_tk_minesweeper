@@ -1,3 +1,6 @@
+#!/usr/bin/python3.7
+# -*- coding: utf-8 -*-
+
 
 import tkinter as tk
 import os
@@ -69,6 +72,5 @@ def get_logger(name, level=LOG_LEVEL):
     """
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    # logger.addHandler(sh)  # todo currently disabled due to doubled console output, delete in final version
     return logger
 
