@@ -15,7 +15,7 @@ COUNTER_HEIGHT = 23
 COUNTER_WIDTH = 13
 
 
-class CounterImages(object):
+class CounterImages:
     """
     all possible images for counter fields for faster image setting
     """

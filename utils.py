@@ -40,18 +40,13 @@ def resource_path(relative_path):
 
 def get_img(rel_path):
     """
-    return photoimage of image in path, uses resource path for pyinstaller
+    return PhotoImage of image in path, uses resource path for pyInstaller
     :param rel_path:
     :type rel_path: path
-    :return:
+    :return: loaded image for tkinter usage
     :rtype: tk.PhotoImage
     """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except:
-        base_path = os.path.abspath(".")
-    return tk.PhotoImage(file=os.path.join(base_path, rel_path))
+    return tk.PhotoImage(file=resource_path(rel_path))
 
 
 def check_pyversion(designed_for):
@@ -73,4 +68,3 @@ def get_logger(name, level=LOG_LEVEL):
     logger = logging.getLogger(name)
     logger.setLevel(level)
     return logger
-
