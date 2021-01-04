@@ -45,7 +45,7 @@ Run the game by calling from console with following command or simply by doublec
 python minesweeper.py
 ```
 
-##### Debug mode
+#### Debug mode
 
 If the game is called with argument *--debug*, various additional debug options are available.
 Hint: Some debug options are not possible if console is deactivated as in the Minesweeper.exe
@@ -60,7 +60,7 @@ Minesweeper.exe --debug
 * F4 reveals hidden fields without having impact on game functionality (hide again by pressing F4 again to continue playing)
 
 
-##### Open todos
+#### Open todos
 
  * [x] Dynamic Pixel for pixel recreation of the original Windows XP Minesweeper
  * [x] Basic game functionality
