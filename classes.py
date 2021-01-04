@@ -55,7 +55,7 @@ class Game:
         self.logger = utils.get_logger(self.__class__.__name__)
 
         self.possible_settings = possible_settings
-        self.settings = chosen_setting
+        self.curr_setting = chosen_setting
         self.running = False
         self.fields_left = None
 
@@ -65,7 +65,7 @@ class Game:
         :return: None
         :rtype: None
         """
-        self.fields_left = self.settings.num_rows * self.settings.num_cols - self.settings.bombs
+        self.fields_left = self.curr_setting.num_rows * self.curr_setting.num_cols - self.curr_setting.bombs
         self.running = True
 
     def end_game(self):

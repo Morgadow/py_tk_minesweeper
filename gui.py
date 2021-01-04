@@ -125,8 +125,8 @@ class MinesweeperGUI:
         """
         # basic settings
         self._size = Size(
-            width=self.game.settings.num_cols * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS) + RIGHT_FIELD_BORDER + LEFT_FIELD_BORDER + LEFT_WHITE_BORDER + LEFT_GRAY_BORDER + RIGHT_GRAY_BORDER,
-            height=self.game.settings.num_rows * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS) + TOP_WHITE_BORDER + TOP_GRAY_BORDER + FULL_HEIGHT_TOP_FRAME + BORDER_TOP_FIELD_BORDER + BOTTOM_GRAY_BORDER + TOP_FIELD_BORDER + BOT_FIELD_BORDER
+            width=self.game.curr_setting.num_cols * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS) + RIGHT_FIELD_BORDER + LEFT_FIELD_BORDER + LEFT_WHITE_BORDER + LEFT_GRAY_BORDER + RIGHT_GRAY_BORDER,
+            height=self.game.curr_setting.num_rows * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS) + TOP_WHITE_BORDER + TOP_GRAY_BORDER + FULL_HEIGHT_TOP_FRAME + BORDER_TOP_FIELD_BORDER + BOTTOM_GRAY_BORDER + TOP_FIELD_BORDER + BOT_FIELD_BORDER
         )
 
         # icon and main field
@@ -190,7 +190,7 @@ class MinesweeperGUI:
 
         # upper area
         self._upper_frame = tk.Frame(self._root, bg=COLOR_LIGHT_GRAY)
-        self._upper_frame.width = self.game.settings.num_cols * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS) + LEFT_FIELD_BORDER + RIGHT_FIELD_BORDER
+        self._upper_frame.width = self.game.curr_setting.num_cols * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS) + LEFT_FIELD_BORDER + RIGHT_FIELD_BORDER
         self._upper_frame.height = FULL_HEIGHT_TOP_FRAME
         self._upper_frame.place(x=LEFT_WHITE_BORDER + LEFT_GRAY_BORDER, y=TOP_WHITE_BORDER + TOP_GRAY_BORDER, width=self._upper_frame.width, height=self._upper_frame.height)
 
@@ -213,7 +213,7 @@ class MinesweeperGUI:
         tk.Label(self._upper_frame, bg=COLOR_DARK_GRAY).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER, width=BORDER_AROUND_COUNTER, height=counter.COUNTER_HEIGHT+BORDER_AROUND_COUNTER)
         tk.Label(self._upper_frame, bg=COLOR_WHITE).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER + counter.COUNTER_WIDTH*3, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER, width=BORDER_AROUND_COUNTER, height=counter.COUNTER_HEIGHT + BORDER_AROUND_COUNTER)
         tk.Label(self._upper_frame, bg=COLOR_WHITE).place(x=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_LEFT_COUNTER + BORDER_AROUND_COUNTER, y=OUTER_BORDER_TOP_FRAME + INNER_BORDER_TOP_FRAME + SPACER_ABOVE_COUNTER + BORDER_AROUND_COUNTER + counter.COUNTER_HEIGHT, width=counter.COUNTER_WIDTH*3, height=BORDER_AROUND_COUNTER)
-        self._flag_counter = counter.FlagCounter(flag_counter_frame, self.game.settings.bombs, self._counter_images, self.game)
+        self._flag_counter = counter.FlagCounter(flag_counter_frame, self.game.curr_setting.bombs, self._counter_images, self.game)
         self._flag_counter.init()
 
         # timer counter area
@@ -238,8 +238,8 @@ class MinesweeperGUI:
 
         # field area
         self._field_frame = tk.Frame(self._root, bg=COLOR_DARK_GRAY)
-        self._field_frame.width = self.game.settings.num_cols * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS)
-        self._field_frame.height = self.game.settings.num_rows * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS)
+        self._field_frame.width = self.game.curr_setting.num_cols * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS)
+        self._field_frame.height = self.game.curr_setting.num_rows * (field.BACK_PANEL_WIDTH + field.LINE_BETWEEN_FIELDS)
         self._field_frame.place(x=LEFT_WHITE_BORDER + LEFT_GRAY_BORDER + LEFT_FIELD_BORDER, y=TOP_WHITE_BORDER + TOP_GRAY_BORDER + FULL_HEIGHT_TOP_FRAME + BORDER_TOP_FIELD_BORDER + TOP_FIELD_BORDER, width=self._field_frame.width, height=self._field_frame.height)
 
         # top, left, right, bot borders around game field
@@ -289,8 +289,8 @@ class MinesweeperGUI:
             self._debug_reveal = False
         else:
             self._debug_reveal = True
-            for x in range(self.game.settings.num_cols):
-                for y in range(self.game.settings.num_rows):
+            for x in range(self.game.curr_setting.num_cols):
+                for y in range(self.game.curr_setting.num_rows):
                     if not self._fields[x][y].front.is_revealed:
                         self._fields[x][y].front.un_place()
                         self._debug_revealed_fields.append(self._fields[x][y].pos)
@@ -303,9 +303,9 @@ class MinesweeperGUI:
         """
         t = time.time()
         # create fields
-        for col in range(self.game.settings.num_cols):
+        for col in range(self.game.curr_setting.num_cols):
             col_fields = []
-            for row in range(self.game.settings.num_rows):
+            for row in range(self.game.curr_setting.num_rows):
 
                 elem = field.Field(Position(col, row), self.game, self._flag_counter.count_up, self._flag_counter.count_down, self._timer_counter.start_timer, self.reveal_emtpy_panels, self.game_won, self.game_lost)
                 elem.add_back(self._field_frame, elem.pos, self._field_back_images)
@@ -333,9 +333,9 @@ class MinesweeperGUI:
         self._give_out_bombs()
         self._update_all_fields(eval_nums=True)
         self._timer_counter.reset()
-        self._flag_counter.reset(start=self.game.settings.bombs)
+        self._flag_counter.reset(start=self.game.curr_setting.bombs)
         self.game.running = True
-        self.game.fields_left = self.game.settings.num_rows * self.game.settings.num_rows - self.game.settings.bombs
+        self.game.fields_left = self.game.curr_setting.num_rows * self.game.curr_setting.num_rows - self.game.curr_setting.bombs
 
     def _give_out_bombs(self):
         """
@@ -344,11 +344,11 @@ class MinesweeperGUI:
         :rtype: None
         """
         av_pos = []
-        for x in range(self.game.settings.num_cols):
-            for y in range(self.game.settings.num_rows):
+        for x in range(self.game.curr_setting.num_cols):
+            for y in range(self.game.curr_setting.num_rows):
                 av_pos.append(Position(x, y))
 
-        bombs = random.sample(av_pos, self.game.settings.bombs)
+        bombs = random.sample(av_pos, self.game.curr_setting.bombs)
         for pos in bombs:
             self._fields[pos.x][pos.y].back.set_bomb()
 
@@ -362,15 +362,15 @@ class MinesweeperGUI:
         """
         t = time.time()
         if eval_nums:
-            for x in range(self.game.settings.num_cols):
-                for y in range(self.game.settings.num_rows):
+            for x in range(self.game.curr_setting.num_cols):
+                for y in range(self.game.curr_setting.num_rows):
 
                     sub_field = []
                     if x > 0:
-                        sub_field.extend(self._fields[x-1][max(y-1, 0):min(y + 2, self.game.settings.num_rows)])
-                    sub_field.extend(self._fields[x][max(y-1, 0):min(y + 2, self.game.settings.num_rows)])
-                    if x < self.game.settings.num_cols-1:
-                        sub_field.extend(self._fields[x+1][max(y-1, 0):min(y + 2, self.game.settings.num_rows)])
+                        sub_field.extend(self._fields[x-1][max(y-1, 0):min(y + 2, self.game.curr_setting.num_rows)])
+                    sub_field.extend(self._fields[x][max(y-1, 0):min(y + 2, self.game.curr_setting.num_rows)])
+                    if x < self.game.curr_setting.num_cols-1:
+                        sub_field.extend(self._fields[x+1][max(y-1, 0):min(y + 2, self.game.curr_setting.num_rows)])
 
                     self._fields[x][y].back.bombs_near = [elem.back.has_bomb for elem in sub_field].count(True)
                     self._fields[x][y].back.update_img()
@@ -415,8 +415,8 @@ class MinesweeperGUI:
         self._smiley.set_won()
         self._timer_counter.stop_timer()
 
-        for x in range(self.game.settings.num_cols):  # every unflagged bomb gets a flag
-            for y in range(self.game.settings.num_rows):
+        for x in range(self.game.curr_setting.num_cols):  # every unflagged bomb gets a flag
+            for y in range(self.game.curr_setting.num_rows):
                 if self._fields[x][y].back.has_bomb and not self._fields[x][y].front.has_flag:
                     self._fields[x][y].front.set_flag()
 
@@ -428,8 +428,8 @@ class MinesweeperGUI:
         :return: None
         :rtype: None
         """
-        for x in range(self.game.settings.num_cols):
-            for y in range(self.game.settings.num_rows):
+        for x in range(self.game.curr_setting.num_cols):
+            for y in range(self.game.curr_setting.num_rows):
                 if self._fields[x][y].back.has_bomb and not self._fields[x][y].front.has_flag:
                     self._fields[x][y].revealed = True
                 if self._fields[x][y].back.has_bomb and self._fields[x][y].front.has_flag:
@@ -468,12 +468,12 @@ class MinesweeperGUI:
         sub_field = []
 
         if pos.x > 0:
-            sub_field.extend(self._fields[pos.x-1][max(pos.y-1, 0):min(pos.y + 2, self.game.settings.num_rows)])
-        if pos.x < self.game.settings.num_cols-1:
-            sub_field.extend(self._fields[pos.x+1][max(pos.y-1, 0):min(pos.y + 2, self.game.settings.num_rows)])
+            sub_field.extend(self._fields[pos.x-1][max(pos.y-1, 0):min(pos.y + 2, self.game.curr_setting.num_rows)])
+        if pos.x < self.game.curr_setting.num_cols-1:
+            sub_field.extend(self._fields[pos.x+1][max(pos.y-1, 0):min(pos.y + 2, self.game.curr_setting.num_rows)])
         if pos.y > 0:
             sub_field.append(self._fields[pos.x][pos.y-1])
-        if pos.y < self.game.settings.num_rows-1:
+        if pos.y < self.game.curr_setting.num_rows-1:
             sub_field.append(self._fields[pos.x][pos.y+1])
 
         return sub_field

@@ -50,11 +50,12 @@ class Minesweeper:
         :return:
         :rtype:
         """
-        self._mode = setting
-        self._game = Game(possible_settings=self.possible_modes, chosen_setting=self._mode)
-        self._gui.destroy()
-        self._gui = gui.MinesweeperGUI(self._game, self.create_new)
-        self._gui.build_gui()
+        if setting != self._game.curr_setting:
+            self._mode = setting
+            self._game = Game(possible_settings=self.possible_modes, chosen_setting=self._mode)
+            self._gui.destroy()
+            self._gui = gui.MinesweeperGUI(self._game, self.create_new)
+            self._gui.build_gui()
 
 
 if __name__ == '__main__':
