@@ -3,11 +3,10 @@ Copy of WinXP Minesweeper in pythons tkinter.
 The original game is already provided inside the repository
 
 ### Idea
-This project meant to be a programming exercise done to be able to compare different gui frameworks in different languages
+This project meant to be a programming exercise done to be able to compare different gui frameworks in different languages.
 
 For further restrictions a strict object oriented approach was used.
-
-As using as few dependencies as logically possible was part of the challenge only the following built in packages are used
+As also using as few dependencies as logically possible was part of the challenge only the following built in packages are used:
 
 ```
 os
@@ -20,7 +19,7 @@ logging
 
 ### Run Minesweeper without Python
 
-For playing without the need to install Python, the executables are provided inside the dist folder.
+For playing without the need of installing Python, following executables are provided inside the dist folder:
 
  * *Minesweeper.exe*
  * *Minesweeper_DEBUG.exe*
@@ -30,7 +29,7 @@ For an original experience consider using the non debug variant.
 
 ### Run with Python
 
-The code is written in **Python 3.7.8**, which needs to be installed 
+The code is written in **Python 3.7.8**, which (or a compatible version) needs to be installed 
 
 This packages have to be installed before running:
 
