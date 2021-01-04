@@ -64,6 +64,7 @@ Minesweeper.exe --debug
  * [x] Dynamic Pixel for pixel recreation of the original Windows XP Minesweeper
  * [x] Basic game functionality
  * [x] Change game mode over menu options
+ * [ ] Implementation of custom sized game fields over the custom menu bar option
  * [ ] Highscore system with json/ini file saving (Can be hard inside .exe file ?!)
  * [ ] Fill remaining menu options inside help Menu
  * [ ] Add game sound
